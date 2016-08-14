@@ -3,12 +3,12 @@
 #include "pebble.h"
 
 static Window *s_window;
-static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
-static TextLayer *s_day_label, *s_num_label;
+static Layer *s_simple_bg_layer, *s_ww_layer, *s_hands_layer;
+static TextLayer *s_ww_label;
 
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
-static char s_num_buffer[4], s_day_buffer[6];
+static char s_ww_buffer[9];
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorBlack);
@@ -26,20 +26,24 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   GPoint center = grect_center_point(&bounds);
 
-  const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 19, bounds.size.w / 2);
-
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
-  int32_t second_angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
+  
+  /*
+  //const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 19, bounds.size.w / 2);
+  //int32_t second_angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
+
   GPoint second_hand = {
     .x = (int16_t)(sin_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.x,
     .y = (int16_t)(-cos_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.y,
   };
+  
 
   // second hand
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_draw_line(ctx, second_hand, center);
-
+  */
+  
   // minute/hour hand
   graphics_context_set_fill_color(ctx, GColorWhite);
   graphics_context_set_stroke_color(ctx, GColorBlack);
@@ -61,14 +65,11 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
 
-  strftime(s_day_buffer, sizeof(s_day_buffer), "%a", t);
-  text_layer_set_text(s_day_label, s_day_buffer);
-
-  strftime(s_num_buffer, sizeof(s_num_buffer), "%d", t);
-  text_layer_set_text(s_num_label, s_num_buffer);
+  strftime(s_ww_buffer, sizeof(s_ww_buffer), "WW-%W", t);
+  text_layer_set_text(s_ww_label, s_ww_buffer);
 }
 
-static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
+static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(s_window));
 }
 
@@ -80,20 +81,22 @@ static void window_load(Window *window) {
   layer_set_update_proc(s_simple_bg_layer, bg_update_proc);
   layer_add_child(window_layer, s_simple_bg_layer);
 
-  s_date_layer = layer_create(bounds);
-  layer_set_update_proc(s_date_layer, date_update_proc);
-  layer_add_child(window_layer, s_date_layer);
+  s_ww_layer = layer_create(bounds);
+  layer_set_update_proc(s_ww_layer, date_update_proc);
+  layer_add_child(window_layer, s_ww_layer);
 
-  s_day_label = text_layer_create(PBL_IF_ROUND_ELSE(
-    GRect(63, 114, 27, 20),
-    GRect(46, 114, 27, 20)));
-  text_layer_set_text(s_day_label, s_day_buffer);
-  text_layer_set_background_color(s_day_label, GColorBlack);
-  text_layer_set_text_color(s_day_label, GColorWhite);
-  text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  s_ww_label = text_layer_create(PBL_IF_ROUND_ELSE(
+    GRect(0, 114, bounds.size.w, 20),
+    GRect(0, 114, bounds.size.w, 20)));
+  text_layer_set_text_alignment(s_ww_label, GTextAlignmentCenter);
+  text_layer_set_text(s_ww_label, s_ww_buffer);
+  text_layer_set_background_color(s_ww_label, GColorClear);
+  text_layer_set_text_color(s_ww_label, GColorWhite);
+  text_layer_set_font(s_ww_label, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 
-  layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
+  layer_add_child(s_ww_layer, text_layer_get_layer(s_ww_label));
 
+  /*
   s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(
     GRect(90, 114, 18, 20),
     GRect(73, 114, 18, 20)));
@@ -103,6 +106,7 @@ static void window_load(Window *window) {
   text_layer_set_font(s_num_label, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
 
   layer_add_child(s_date_layer, text_layer_get_layer(s_num_label));
+  */
 
   s_hands_layer = layer_create(bounds);
   layer_set_update_proc(s_hands_layer, hands_update_proc);
@@ -111,10 +115,10 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   layer_destroy(s_simple_bg_layer);
-  layer_destroy(s_date_layer);
+  layer_destroy(s_ww_layer);
 
-  text_layer_destroy(s_day_label);
-  text_layer_destroy(s_num_label);
+  text_layer_destroy(s_ww_label);
+  //text_layer_destroy(s_num_label);
 
   layer_destroy(s_hands_layer);
 }
@@ -127,8 +131,8 @@ static void init() {
   });
   window_stack_push(s_window, true);
 
-  s_day_buffer[0] = '\0';
-  s_num_buffer[0] = '\0';
+  s_ww_buffer[0] = '\0';
+  //s_num_buffer[0] = '\0';
 
   // init hand paths
   s_minute_arrow = gpath_create(&MINUTE_HAND_POINTS);
@@ -144,7 +148,7 @@ static void init() {
     s_tick_paths[i] = gpath_create(&ANALOG_BG_POINTS[i]);
   }
 
-  tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+  tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
 }
 
 static void deinit() {
