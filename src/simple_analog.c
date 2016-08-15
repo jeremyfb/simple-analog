@@ -10,15 +10,42 @@ static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
 static char s_ww_buffer[9];
 
+static void draw_tick(Layer *layer, GContext *ctx, int8_t num) {
+  GRect bounds = layer_get_bounds(layer);
+  GPoint center = grect_center_point(&bounds);
+  
+  const int16_t face_radius = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 19, bounds.size.w / 2);
+  const int16_t tick_length = 5;
+  int32_t tick_angle = TRIG_MAX_ANGLE * num * 5 / 60;
+  
+  GPoint tick_inner = {
+    .x = (int16_t)(sin_lookup(tick_angle) * ((int32_t)face_radius - tick_length) / TRIG_MAX_RATIO) + center.x,
+    .y = (int16_t)(-cos_lookup(tick_angle) * ((int32_t)face_radius - tick_length) / TRIG_MAX_RATIO) + center.y,
+  };
+  GPoint tick_outer = {
+    .x = (int16_t)(sin_lookup(tick_angle) * (int32_t)face_radius / TRIG_MAX_RATIO) + center.x,
+    .y = (int16_t)(-cos_lookup(tick_angle) * (int32_t)face_radius / TRIG_MAX_RATIO) + center.y,
+  };
+  
+  // second hand
+  graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_draw_line(ctx, tick_inner, tick_outer);
+
+}
 static void bg_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
   graphics_context_set_fill_color(ctx, GColorWhite);
+  /*
   for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
     const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
     const int y_offset = PBL_IF_ROUND_ELSE(6, 0);
     gpath_move_to(s_tick_paths[i], GPoint(x_offset, y_offset));
     gpath_draw_filled(ctx, s_tick_paths[i]);
+  }
+  */
+  for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
+    draw_tick(layer, ctx, i);
   }
 }
 
