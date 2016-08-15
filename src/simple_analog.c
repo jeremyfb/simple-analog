@@ -86,13 +86,13 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, s_ww_layer);
 
   s_ww_label = text_layer_create(PBL_IF_ROUND_ELSE(
-    GRect(0, 114, bounds.size.w, 20),
-    GRect(0, 114, bounds.size.w, 20)));
+    GRect(0, 114, bounds.size.w, 30),
+    GRect(0, 114, bounds.size.w, 30)));
   text_layer_set_text_alignment(s_ww_label, GTextAlignmentCenter);
   text_layer_set_text(s_ww_label, s_ww_buffer);
   text_layer_set_background_color(s_ww_label, GColorClear);
   text_layer_set_text_color(s_ww_label, GColorWhite);
-  text_layer_set_font(s_ww_label, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  text_layer_set_font(s_ww_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
   layer_add_child(s_ww_layer, text_layer_get_layer(s_ww_label));
 
