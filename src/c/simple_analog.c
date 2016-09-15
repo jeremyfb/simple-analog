@@ -15,11 +15,11 @@ static void draw_tick(Layer *layer, GContext *ctx, int8_t num) {
   GPoint center = grect_center_point(&bounds);
   
   const int16_t face_radius = PBL_IF_ROUND_ELSE((bounds.size.w / 2)-5, bounds.size.w / 2);
-  int16_t tick_length = 5;
+  int16_t tick_length = 10;
   int32_t tick_angle = TRIG_MAX_ANGLE * num /12;
   
   if (num % 3 == 0) {
-    tick_length = 10;
+    tick_length = 15;
   }
   GPoint tick_inner = {
     .x = (int16_t)(sin_lookup(tick_angle) * ((int32_t)face_radius - tick_length) / TRIG_MAX_RATIO) + center.x,
@@ -31,11 +31,12 @@ static void draw_tick(Layer *layer, GContext *ctx, int8_t num) {
   };
   
   graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_stroke_width(ctx, 5);
   graphics_draw_line(ctx, tick_inner, tick_outer);
 
 }
 static void bg_update_proc(Layer *layer, GContext *ctx) {
-  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_context_set_fill_color(ctx, GColorBlue);
   graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
   graphics_context_set_fill_color(ctx, GColorWhite);
   /*
@@ -75,26 +76,28 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   
   // minute/hour hand
   graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_context_set_stroke_color(ctx, GColorWhite);
 
   gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
   gpath_draw_filled(ctx, s_minute_arrow);
   gpath_draw_outline(ctx, s_minute_arrow);
 
+  graphics_context_set_fill_color(ctx, GColorRed);
+  graphics_context_set_stroke_color(ctx, GColorRed);
   gpath_rotate_to(s_hour_arrow, (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6));
   gpath_draw_filled(ctx, s_hour_arrow);
   gpath_draw_outline(ctx, s_hour_arrow);
 
   // dot in the middle
   graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_rect(ctx, GRect(bounds.size.w / 2 - 1, bounds.size.h / 2 - 1, 3, 3), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(bounds.size.w / 2 - 2, bounds.size.h / 2 - 2, 5, 5), 0, GCornerNone);
 }
 
 static void date_update_proc(Layer *layer, GContext *ctx) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
 
-  strftime(s_ww_buffer, sizeof(s_ww_buffer), "WW-%W", t);
+  strftime(s_ww_buffer, sizeof(s_ww_buffer), "WW-%V", t);
   text_layer_set_text(s_ww_label, s_ww_buffer);
 }
 

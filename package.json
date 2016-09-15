@@ -2,14 +2,11 @@
     "author": "Pebble Technology",
     "dependencies": {},
     "keywords": [],
-    "name": "my-simple-analog",
+    "name": "workweekface",
     "pebble": {
-        "capabilities": [
-            ""
-        ],
-        "displayName": "My Simple Analog",
-        "enableMultiJS": false,
-        "messageKeys": {},
+        "displayName": "Work Week Watch Face",
+        "enableMultiJS": true,
+        "messageKeys": [],
         "projectType": "native",
         "resources": {
             "media": []
@@ -20,7 +17,7 @@
             "basalt",
             "chalk"
         ],
-        "uuid": "ecc8f112-318f-4ee2-be11-53c63b8a1139",
+        "uuid": "a9d41558-6c57-4d0e-9850-4dd6a8219442",
         "watchapp": {
             "watchface": true
         }
