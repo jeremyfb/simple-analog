@@ -96,8 +96,26 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 static void date_update_proc(Layer *layer, GContext *ctx) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
+  struct tm jan1;
+  struct tm *ptrJan1 = NULL;
+  time_t then = 0;
 
-  strftime(s_ww_buffer, sizeof(s_ww_buffer), "WW-%V", t);
+  int doy = t->tm_yday + 1;  // Jan 1 = 1, Jan 2 = 2, etc...
+  int dow = t->tm_wday;     // Sun = 0, Mon = 1, etc...
+  int dowJan1; // find out first of year's day
+  
+  memset(&jan1, '\0', sizeof(jan1));
+  jan1.tm_year = t->tm_year;
+  then = mktime(&jan1);
+  ptrJan1 = localtime(&then);
+  
+  dowJan1 = ptrJan1->tm_wday;
+  
+  int weekNum = ((doy + 6) / 7);   
+  if (dow <= dowJan1)                 // adjust for being after Saturday of week #1
+    ++weekNum;
+  snprintf(s_ww_buffer, sizeof(s_ww_buffer), "WW-%d", weekNum );
+  //strftime(s_ww_buffer, sizeof(s_ww_buffer), "WW-%V", t);
   text_layer_set_text(s_ww_label, s_ww_buffer);
 }
 
